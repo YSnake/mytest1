@@ -1,6 +1,6 @@
 package cn.snake.controller;
 
-import cn.snake.ItemService;
+import cn.snake.service.ItemService;
 import cn.snake.entity.Items;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;

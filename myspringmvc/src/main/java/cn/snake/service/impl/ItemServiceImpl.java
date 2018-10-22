@@ -1,6 +1,6 @@
 package cn.snake.service.impl;
 
-import cn.snake.ItemService;
+import cn.snake.service.ItemService;
 import cn.snake.dao.ItemsDao;
 import cn.snake.entity.Items;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,4 +1,4 @@
-package cn.snake;
+package cn.snake.service;
 
 import cn.snake.entity.Items;
 
