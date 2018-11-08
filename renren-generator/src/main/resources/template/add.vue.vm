@@ -1,0 +1,104 @@
+<template>
+    <div class="common_update_view" style="display:inline">
+        <el-button @click="handleAdd">新增</el-button>
+        <el-dialog title="新增" :visible.sync="isShowDialog" align="center">
+            <el-form :model="dialogItemsAdds" :rules="rulesAdd" ref="dialogItemsAdds"  class="demo-ruleForm">
+                #foreach($column in $columns)
+                    #if(${column.editShow} eq '1')
+                        <el-form-item label="${column.comments}" prop="${column.columnName}">
+                            <el-input v-model="dialogItemsAdds.${column.columnName}"></el-input>
+                        </el-form-item>
+                    #end
+                #end
+
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button type="primary" @click="submitForm('dialogItemsAdds', addData)">保存</el-button>
+                <el-button @click="isShowDialog = false">取消</el-button>
+            </div>
+        </el-dialog>
+    </div>
+</template>
+
+<script>
+    import {add${className}} from '@/api/${classname}'
+    export default {
+        name: 'add',
+        data() {
+            return {
+                dialogItemsAdds:{
+                    #foreach($column in $columns) #if(${column.editShow} eq '1') ${column.columnName} : ''#if($foreach.hasNext),#end  #end #end
+        },
+            dialogFormVisibleAdd: true,
+                    isShowDialog: false,
+                    // 表单校验规则
+                    rulesAdd: {
+                #foreach($column in $columns) #if($column.editShow eq '1') #if($column.notNull eq '1')  ${column.columnName}: [
+                    { required: true, message: '请输入${column.comments}', trigger: 'blur' },
+                    #if($column.length != '') #if($column.length != '1')
+                        { min: 1, max: ${column.length}, message: '长度在 1 到${column.length}个字符', trigger: 'blur' }
+                    #end #end
+                        ]
+                    #end #end
+                    #end
+
+            }
+        }
+        },
+        methods: {
+            // 提交表单
+            submitForm(formName, fun) {
+                #[[this.$refs[formName].validate((valid) => {]]#
+                if (valid) {
+                fun();
+                } else {
+                console.log('error submit!!');
+                return false;
+                }
+                });
+            },
+            addData() {
+                add${className}({...this.dialogItemsAdds}).then(res => {
+                    if (res.status === 200) {
+                    if (res.data.ret === '0') {
+                        const data = res.data.data
+                    #[[this.$message({]]#
+                            type: 'info',
+                            message: res.data.msg
+                        })
+                        this.dialogItemsAdds = {
+                        #foreach($column in $columns) #if(${column.editShow} eq '1') ${column.columnName} : '' #if($foreach.hasNext),#end #end #end
+                    }
+                        this.$emit('getData')
+                    } else {
+                    #[[this.$message({]]#
+                            type: 'warning',
+                            message: res.data.msg
+                        })
+                    }
+                }
+                this.isShowDialog = false
+            }).catch((err)=>{
+                    this.isShowDialog = false
+                #[[this.$message({]]#
+                    type: 'warning',
+                    message: '新增失败'
+                })
+            })
+            },
+            handleAdd () {
+                this.isShowDialog = true
+            }
+        }
+    }
+</script>
+<style scoped>
+    .tag {
+        width: 90%;
+        margin: 0 auto 30px;
+    }
+    .add {
+        width: 90%;
+        margin: 30px auto;
+    }
+</style>

@@ -1,0 +1,30 @@
+import request from '@/utils/request'
+
+export function get${className}List(id) {
+    return request({
+        url: '${classname}/get${className}List',
+        method: 'post',
+        data:id
+    })
+}
+export function add${className}(id) {
+    return request({
+        url: '${classname}/add${className}',
+        method: 'post',
+        data: id
+    })
+}
+export function update${className}(id) {
+    return request({
+        url: '${classname}/update${className}',
+        method: 'post',
+        data: id
+    })
+}
+export function delete${className}(id) {
+    return request({
+        url: '${classname}/delete${className}',
+        method: 'post',
+        data: {id}
+    })
+}

@@ -1,0 +1,210 @@
+<template>
+    <div class="container">
+        <div class="app-container calendar-list-container">
+            <el-row :gutter="20" style="margin-bottom: 10px">
+                <el-col :span="12">
+                    <div>
+                        <el-input v-model.trim="input" style="width: 120px" placeholder="搜索关键字"></el-input>
+                        <el-select style="width: 120px" v-model="option" placeholder="请选择">
+                            <el-option
+                                    v-for="item in options"
+                                    :key="item.value"
+                                    :label="item.label"
+                                    :value="item.value">
+                            </el-option>
+                        </el-select>
+                        <el-button type="primary" icon="el-icon-search" @click="condition()">搜索</el-button>
+                    </div>
+                </el-col>
+                <el-col :span="2" :offset="10"><Add v-on:getData="getData"></Add></el-col>
+            </el-row>
+            <el-table key='0' :data="tableData" v-loading="listLoading" element-loading-text="给我一点时间" border fit
+                      highlight-current-row style="width: 100%">
+
+                <!--
+                        <el-table-column align="center" label="ID">
+                          <template slot-scope="scope">
+                            <span>{{scope.row.id}}</span>
+                          </template>
+                        </el-table-column>
+                -->
+        #foreach ($column in $columns)
+           #if(${column.listShow} eq '1')
+              <el-table-column  align="center" label="${column.comments}">
+                  <template slot-scope="scope">
+                      <el-tag class="tag" size="medium" #if(${column.format} eq 'date') v-if="scope.row.${column.columnName}" #end >{{ scope.row.${column.columnName} #if(${column.format} eq 'date')| format #end }}</el-tag>
+                  </template>
+              </el-table-column>
+           #end
+        #end
+                <el-table-column width="200" align="center" label="操作" class-name="small-padding fixed-width">
+                    <template slot-scope="scope">
+                        <el-button type="primary" size="mini" @click="handleCheck(scope.row)">查看</el-button>
+                        <Update :scope="scope"></Update>
+                        <el-button type="primary" size="mini" @click="handleCheck(scope.row)">查看</el-button>
+                        <Update :scope="scope"></Update>
+                        <el-button type="danger" size="mini" @click="handleDeleted(scope.row)">删除</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+
+            <div class="pagination-container">
+                <el-pagination background @current-change="handleCurrentChange" :current-page="pageNum" :page-size="pageSize" layout="total, prev, pager, next, jumper" :total="total">
+                </el-pagination>
+            </div>
+
+            <el-dialog title="查看" :visible.sync="checkFormVisible" align="center">
+                <el-form ref="dataForm" :model="dialogItems" label-position="right"
+                         style='margin-left:40px;margin-right: 40px'>
+                    #foreach ($column in $columns)
+                    <el-form-item label="${column.comments}:" style="margin-bottom: 0;">
+                        {{dialogItems.${column.columnName} #if(${column.format} eq 'date')| format#end}}
+                    </el-form-item>
+                    #end
+                </el-form>
+                <div slot="footer" class="dialog-footer">
+                    <el-button @click="checkFormVisible = false">关闭</el-button>
+                </div>
+            </el-dialog>
+        </div>
+    </div>
+</template>
+
+<script>
+    import Add from './components/add'
+    import Update from './components/update'
+    import {get${className}List, delete${className} } from '../../../api/${classname}'
+    import { formatDate } from '../../../utils/index'
+    export default {
+        name: '${vueName}',
+        components: {Add, Update},
+        data() {
+            return {
+                dialogItems: '',
+                checkFormVisible: false,
+                tableData: [],
+                items: '',
+                pageNum: 1,
+                total: 1,
+                pageSize: 10,
+                listLoading: true,
+                input: '',
+                option:'',
+                options: [
+                  #foreach ($column in $columns)
+                    #if(${column.canSearch} == '1')
+                        {
+                        value: '${column.columnName}',
+                        label: '${column.comments}'
+                        }
+                    #end,
+                  #end
+
+                    ]
+        }
+        },
+        created() {
+            this.getData()
+        },
+        methods: {
+            // 提交表单
+            submitForm(formName, fun) {
+            #[[this.$refs[formName].validate((valid) => {]]#
+                if (valid) {
+                fun();
+                } else {
+                console.log('error submit!!');
+                return false;
+                }
+                });
+            },
+            handleCurrentChange(val) {
+                this.pageNum = val
+                this.getData(val)
+            },
+            condition() {
+                this.getData(this.pageNum)
+            },
+            getData(id = 1) {
+                this.listLoading = true
+                get${className}List({pageNum:id,input: this.input,option: this.option,pageSize:10}).then(res => {
+                    this.listLoading = false
+                if (res.status === 200) {
+                    if (res.data.ret === '0') {
+                        const data = res.data.data
+                        if (data.pageNum !== this.pageNum && this.pageNum > 1) {
+                            this.getData(data.pageNum)
+                        }
+                        this.tableData = data.list || []
+                        this.pageNum = data.pageNum || 1
+                        this.pageSize = data.pageSize || 10
+                        this.total = data.total || 10
+                    } else {
+                    #[[this.$message({]]#
+                            type: 'warning',
+                            message: res.data.msg
+                        })
+                    }
+                }
+            })
+            },
+            setItems() {
+                this.getData(this.pageNum)
+            },
+            handleCheck(row) {
+                this.dialogItems = row
+                this.checkFormVisible = true
+            },
+            handleDeleted(row) {
+            #[[this.$confirm('您确定要删除?', '温馨提示', {]]#
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning',
+                    center: true
+                }).then(() => {
+                    this.listLoading = true
+            #[[delete${className}(row.id).then(res => {]]#
+                    this.listLoading = false
+                if (res.status === 200) {
+                    if (res.data.ret === '0') {
+                        this.getData(this.pageNum)
+                    #[[this.$message({]]#
+                            type: 'success',
+                            message: '已删除!'
+                        })
+                    } else {
+                    #[[this.$message({]]#
+                            type: 'warning'
+                        })
+                    }
+                }
+            }).catch(() => {
+            #[[this.$message({]]#
+                    type: 'info',
+                    message: '已取消!'
+                })
+            })
+            })
+            }
+        },
+        filters: {
+            format: function(value) {
+                return formatDate(value)
+            }
+        }
+    }
+</script>
+<style rel="stylesheet/scss" lang="scss" scoped>
+    .tag {
+        background: transparent !important;
+        color: inherit !important;
+        border: 0 !important;
+        font-size: inherit !important;
+        padding: 0 !important;
+    }
+
+    .check {
+        color: #97a8be;
+        cursor: text;
+    }
+</style>
